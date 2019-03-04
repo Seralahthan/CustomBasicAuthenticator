@@ -32,8 +32,11 @@ import org.wso2.carbon.identity.application.authenticator.custombasicauth.intern
 import org.wso2.carbon.identity.application.common.model.User;
 import org.wso2.carbon.identity.base.IdentityRuntimeException;
 import org.wso2.carbon.identity.core.util.IdentityTenantUtil;
+import org.wso2.carbon.identity.core.util.IdentityUtil;
 import org.wso2.carbon.user.api.UserRealm;
+import org.wso2.carbon.user.core.UserStoreException;
 import org.wso2.carbon.user.core.UserStoreManager;
+import org.wso2.carbon.user.core.util.UserCoreUtil;
 import org.wso2.carbon.utils.multitenancy.MultitenantUtils;
 
 import java.util.HashMap;
@@ -49,6 +52,7 @@ public class CustomBasicAuthenticator extends AbstractApplicationAuthenticator
 
     private static final long serialVersionUID = 1819664539416029785L;
     private static final Log log = LogFactory.getLog(CustomBasicAuthenticator.class);
+    private static String RE_CAPTCHA_USER_DOMAIN = "user-domain-recaptcha";
 
     @Override
     public boolean canHandle(HttpServletRequest request) {
@@ -145,13 +149,15 @@ public class CustomBasicAuthenticator extends AbstractApplicationAuthenticator
 
         boolean isAuthenticated;
         UserStoreManager userStoreManager;
+        // Reset RE_CAPTCHA_USER_DOMAIN thread local variable before the authentication
+        IdentityUtil.threadLocalProperties.get().remove(RE_CAPTCHA_USER_DOMAIN);
         // Check the authentication
         try {
             int tenantId = IdentityTenantUtil.getTenantIdOfUser(username);
             UserRealm userRealm = CustomBasicAuthenticatorServiceComponent.getRealmService().getTenantUserRealm(tenantId);
             if (userRealm != null) {
                 userStoreManager = (UserStoreManager) userRealm.getUserStoreManager();
-                isAuthenticated = userStoreManager.isExistingUser(username);
+                isAuthenticated = userStoreManager.isExistingUser(MultitenantUtils.getTenantAwareUsername(username));
             } else {
                 throw new AuthenticationFailedException("Cannot find the user realm for the given tenant: " +
                         tenantId, User.getUserFromUserName(username));
@@ -168,12 +174,68 @@ public class CustomBasicAuthenticator extends AbstractApplicationAuthenticator
             throw new AuthenticationFailedException(e.getMessage(), User.getUserFromUserName(username), e);
         }
 
+        if (!isAuthenticated) {
+            if (log.isDebugEnabled()) {
+                log.debug("User authentication failed due to invalid credentials");
+            }
+            if (IdentityUtil.threadLocalProperties.get().get(RE_CAPTCHA_USER_DOMAIN) != null) {
+                username = IdentityUtil.addDomainToName(
+                        username, IdentityUtil.threadLocalProperties.get().get(RE_CAPTCHA_USER_DOMAIN).toString());
+            }
+            IdentityUtil.threadLocalProperties.get().remove(RE_CAPTCHA_USER_DOMAIN);
+            throw new InvalidCredentialsException("User authentication failed due to invalid credentials",
+                    User.getUserFromUserName(username));
+        }
+
         String tenantDomain = MultitenantUtils.getTenantDomain(username);
 
         //TODO: user tenant domain has to be an attribute in the AuthenticationContext
         authProperties.put("user-tenant-domain", tenantDomain);
 
         username = FrameworkUtils.prependUserStoreDomainToName(username);
+
+        if (getAuthenticatorConfig().getParameterMap() != null) {
+            String userNameUri = getAuthenticatorConfig().getParameterMap().get("UserNameAttributeClaimUri");
+            if (StringUtils.isNotBlank(userNameUri)) {
+                boolean multipleAttributeEnable;
+                String domain = UserCoreUtil.getDomainFromThreadLocal();
+                if (StringUtils.isNotBlank(domain)) {
+                    multipleAttributeEnable = Boolean.parseBoolean(userStoreManager.getSecondaryUserStoreManager(domain)
+                            .getRealmConfiguration().getUserStoreProperty("MultipleAttributeEnable"));
+                } else {
+                    multipleAttributeEnable = Boolean.parseBoolean(userStoreManager.
+                            getRealmConfiguration().getUserStoreProperty("MultipleAttributeEnable"));
+                }
+                if (multipleAttributeEnable) {
+                    try {
+                        if (log.isDebugEnabled()) {
+                            log.debug("Searching for UserNameAttribute value for user " + username +
+                                    " for claim uri : " + userNameUri);
+                        }
+                        String usernameValue = userStoreManager.
+                                getUserClaimValue(MultitenantUtils.getTenantAwareUsername(username), userNameUri, null);
+                        if (StringUtils.isNotBlank(usernameValue)) {
+                            tenantDomain = MultitenantUtils.getTenantDomain(username);
+                            usernameValue = FrameworkUtils.prependUserStoreDomainToName(usernameValue);
+                            username = usernameValue + "@" + tenantDomain;
+                            if (log.isDebugEnabled()) {
+                                log.debug("UserNameAttribute is found for user. Value is :  " + username);
+                            }
+                        }
+                    } catch (UserStoreException e) {
+                        //ignore  but log in debug
+                        if (log.isDebugEnabled()) {
+                            log.debug("Error while retrieving UserNameAttribute for user : " + username, e);
+                        }
+                    }
+                } else {
+                    if (log.isDebugEnabled()) {
+                        log.debug("MultipleAttribute is not enabled for user store domain : " + domain + " " +
+                                "Therefore UserNameAttribute is not retrieved");
+                    }
+                }
+            }
+        }
 
         context.setSubject(AuthenticatedUser.createLocalAuthenticatedUserFromSubjectIdentifier(username));
     }

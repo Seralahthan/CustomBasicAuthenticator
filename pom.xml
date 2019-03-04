@@ -381,17 +381,17 @@
                 </configuration>
             </plugin>
 
-            <!--This need to be uncommented once the custom authenticator is working-->
-            <!--<plugin>-->
-            <!--<groupId>org.apache.maven.plugins</groupId>-->
-            <!--<artifactId>maven-surefire-plugin</artifactId>-->
-            <!--<version>${maven.surefire.plugin.version}</version>-->
-            <!--<configuration>-->
-            <!--<suiteXmlFiles>-->
-            <!--<suiteXmlFile>src/test/resources/testng.xml</suiteXmlFile>-->
-            <!--</suiteXmlFiles>-->
-            <!--</configuration>-->
-            <!--</plugin>-->
+            <!--This points to the location of CustomBasicAuthenticator's TestNG file-->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>${maven.surefire.plugin.version}</version>
+                <configuration>
+                    <suiteXmlFiles>
+                        <suiteXmlFile>src/test/resources/testng.xml</suiteXmlFile>
+                    </suiteXmlFiles>
+                </configuration>
+            </plugin>
 
             <plugin>
                 <artifactId>maven-compiler-plugin</artifactId>
