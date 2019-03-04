@@ -45,7 +45,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 /**
- * Username Only based Custom Authenticator
+ * Username Only based Custom Basic Authenticator
  */
 public class CustomBasicAuthenticator extends AbstractApplicationAuthenticator
         implements LocalApplicationAuthenticator {
@@ -164,12 +164,12 @@ public class CustomBasicAuthenticator extends AbstractApplicationAuthenticator
             }
         } catch (IdentityRuntimeException e) {
             if (log.isDebugEnabled()) {
-                log.debug("BasicAuthentication failed while trying to get the tenant ID of the user " + username, e);
+                log.debug("CustomBasicAuthentication failed while trying to get the tenant ID of the user " + username, e);
             }
             throw new AuthenticationFailedException(e.getMessage(), User.getUserFromUserName(username), e);
         } catch (org.wso2.carbon.user.api.UserStoreException e) {
             if (log.isDebugEnabled()) {
-                log.debug("BasicAuthentication failed while trying to authenticate", e);
+                log.debug("CustomBasicAuthentication failed while trying to authenticate", e);
             }
             throw new AuthenticationFailedException(e.getMessage(), User.getUserFromUserName(username), e);
         }

@@ -28,7 +28,6 @@ import org.testng.annotations.ObjectFactory;
 import org.testng.annotations.Test;
 import org.wso2.carbon.CarbonConstants;
 import org.wso2.carbon.identity.application.authentication.framework.AuthenticatorFlowStatus;
-//import org.wso2.carbon.identity.application.authentication.framework.config.ConfigurationFacade;
 import org.wso2.carbon.identity.application.authentication.framework.config.builder.FileBasedConfigurationBuilder;
 import org.wso2.carbon.identity.application.authentication.framework.config.model.AuthenticatorConfig;
 import org.wso2.carbon.identity.application.authentication.framework.context.AuthenticationContext;
@@ -38,31 +37,25 @@ import org.wso2.carbon.identity.application.authentication.framework.model.Authe
 import org.wso2.carbon.identity.application.authentication.framework.util.FrameworkUtils;
 import org.wso2.carbon.identity.application.authenticator.custombasicauth.internal.CustomBasicAuthenticatorServiceComponent;
 import org.wso2.carbon.identity.application.common.model.User;
-import org.wso2.carbon.identity.core.model.IdentityErrorMsgContext;
-//import org.wso2.carbon.identity.core.util.IdentityCoreConstants;
 import org.wso2.carbon.identity.core.util.IdentityTenantUtil;
 import org.wso2.carbon.identity.core.util.IdentityUtil;
 import org.wso2.carbon.identity.testutil.powermock.PowerMockIdentityBaseTest;
 import org.wso2.carbon.user.api.RealmConfiguration;
 import org.wso2.carbon.user.api.UserRealm;
 import org.wso2.carbon.user.api.UserStoreException;
-//import org.wso2.carbon.user.core.UserCoreConstants;
 import org.wso2.carbon.user.core.UserStoreManager;
 import org.wso2.carbon.user.core.service.RealmService;
 import org.wso2.carbon.user.core.util.UserCoreUtil;
 import org.wso2.carbon.utils.multitenancy.MultitenantUtils;
 
 import java.io.IOException;
-//import java.io.UnsupportedEncodingException;
 import java.lang.reflect.InvocationTargetException;
-//import java.net.URLEncoder;
 import java.util.HashMap;
 import java.util.Map;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyBoolean;
 import static org.mockito.Matchers.anyString;
 import static org.powermock.api.mockito.PowerMockito.doAnswer;
 import static org.powermock.api.mockito.PowerMockito.mock;
@@ -87,17 +80,11 @@ public class CustomBasicAuthenticatorTestCase extends PowerMockIdentityBaseTest 
     private UserRealm mockRealm;
     private UserStoreManager mockUserStoreManager;
     private FileBasedConfigurationBuilder mockFileBasedConfigurationBuilder;
-    private IdentityErrorMsgContext mockIdentityErrorMsgContext;
     private User mockUser;
 
     private AuthenticatedUser authenticatedUser;
-    private Boolean isrememberMe = false;
-    private Boolean isUserTenantDomainMismatch = true;
-    private String redirect;
 
     private String dummyUserName = "dummyUserName";
-    private String dummyQueryParam = "dummyQueryParams";
-    private String dummyLoginPage = "dummyLoginPageurl";
     private String dummyPassword = "dummyPassword";
     private int dummyTenantId = -1234;
     private String dummyVal = "dummyVal";
@@ -115,11 +102,6 @@ public class CustomBasicAuthenticatorTestCase extends PowerMockIdentityBaseTest 
     public Object[][] getWrongUsername() {
 
         return new String[][]{
-//                {"admin", null, "false"},
-//                {null, "admin", "false"},
-//                {null, null, "false"},
-//                {"admin", "admin", "true"},
-//                {"", "", "true"}
                 {"admin", "true"},
                 {null, "false"},
                 {"", "true"}
@@ -202,7 +184,6 @@ public class CustomBasicAuthenticatorTestCase extends PowerMockIdentityBaseTest 
 
         mockRequest = mock(HttpServletRequest.class);
         when(mockRequest.getParameter(CustomBasicAuthenticatorConstants.USER_NAME)).thenReturn(dummyUserName);
-//        when(mockRequest.getParameter(BasicAuthenticatorConstants.PASSWORD)).thenReturn(dummyPassword);
 
         mockResponse = mock(HttpServletResponse.class);
 
@@ -217,8 +198,6 @@ public class CustomBasicAuthenticatorTestCase extends PowerMockIdentityBaseTest 
 
         mockStatic(MultitenantUtils.class);
         when(MultitenantUtils.getTenantAwareUsername(dummyUserName)).thenReturn(dummyPassword);
-//        when(mockUserStoreManager.authenticate(
-//                MultitenantUtils.getTenantAwareUsername(dummyUserName), dummyPassword)).thenReturn(false);
         when(mockUserStoreManager.isExistingUser(
                 MultitenantUtils.getTenantAwareUsername(dummyUserName))).thenReturn(false);
 
@@ -267,8 +246,6 @@ public class CustomBasicAuthenticatorTestCase extends PowerMockIdentityBaseTest 
         AuthenticatorConfig authenticatorConfig = new AuthenticatorConfig(dummyUserName, true, parameterMap);
 
         processAuthenticationResponseStartUp();
-
-//        when(mockRequest.getParameter("chkRemember")).thenReturn(chkRemember);
 
         mockStatic(FileBasedConfigurationBuilder.class);
         mockFileBasedConfigurationBuilder = mock(FileBasedConfigurationBuilder.class);
@@ -328,7 +305,6 @@ public class CustomBasicAuthenticatorTestCase extends PowerMockIdentityBaseTest 
 
         mockRequest = mock(HttpServletRequest.class);
         when(mockRequest.getParameter(CustomBasicAuthenticatorConstants.USER_NAME)).thenReturn(dummyUserName);
-//        when(mockRequest.getParameter(BasicAuthenticatorConstants.PASSWORD)).thenReturn(dummyUserName);
 
         mockResponse = mock(HttpServletResponse.class);
 
@@ -345,8 +321,6 @@ public class CustomBasicAuthenticatorTestCase extends PowerMockIdentityBaseTest 
 
         mockStatic(MultitenantUtils.class);
         when(MultitenantUtils.getTenantAwareUsername(dummyUserName)).thenReturn(dummyUserName);
-//        when(mockUserStoreManager.authenticate(
-//                MultitenantUtils.getTenantAwareUsername(dummyUserName), dummyUserName)).thenReturn(true);
         when(mockUserStoreManager.isExistingUser(
                 MultitenantUtils.getTenantAwareUsername(dummyUserName))).thenReturn(true);
 
@@ -369,7 +343,6 @@ public class CustomBasicAuthenticatorTestCase extends PowerMockIdentityBaseTest 
 
         mockRequest = mock(HttpServletRequest.class);
         when(mockRequest.getParameter(CustomBasicAuthenticatorConstants.USER_NAME)).thenReturn(dummyUserName);
-//        when(mockRequest.getParameter(BasicAuthenticatorConstants.PASSWORD)).thenReturn(dummyUserName);
 
         mockResponse = mock(HttpServletResponse.class);
 
