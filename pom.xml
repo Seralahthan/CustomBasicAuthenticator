@@ -266,7 +266,61 @@
         </pluginRepository>
     </pluginRepositories>
 
+    <scm>
+        <connection>scm:svn:http://127.0.0.1/dummy</connection>
+        <developerConnection>scm:svn:https://127.0.0.1/dummy</developerConnection>
+        <tag>HEAD</tag>
+        <url>http://127.0.0.1/dummy</url>
+    </scm>
+
     <build>
+        <pluginManagement>
+            <plugins>
+                <!--<plugin>-->
+                    <!--<groupId>org.apache.felix</groupId>-->
+                    <!--<artifactId>maven-scr-plugin</artifactId>-->
+                    <!--<version>1.7.2</version>-->
+                    <!--<executions>-->
+                        <!--<execution>-->
+                            <!--<id>generate-scr-scrdescriptor</id>-->
+                            <!--<goals>-->
+                                <!--<goal>scr</goal>-->
+                            <!--</goals>-->
+                        <!--</execution>-->
+                    <!--</executions>-->
+                <!--</plugin>-->
+                <!--<plugin>-->
+                    <!--<groupId>org.apache.felix</groupId>-->
+                    <!--<artifactId>maven-bundle-plugin</artifactId>-->
+                    <!--<version>2.4.0</version>-->
+                    <!--<extensions>true</extensions>-->
+                    <!--<configuration>-->
+                        <!--<obrRepository>NONE</obrRepository>-->
+                        <!--<instructions>-->
+                            <!--<SCM-Revision>${buildNumber}</SCM-Revision>-->
+                        <!--</instructions>-->
+                    <!--</configuration>-->
+                <!--</plugin>-->
+                <!--<plugin>-->
+                    <!--<groupId>org.codehaus.mojo</groupId>-->
+                    <!--<artifactId>buildnumber-maven-plugin</artifactId>-->
+                    <!--<version>${maven.buildnumber.plugin.version}</version>-->
+                    <!--<executions>-->
+                        <!--<execution>-->
+                            <!--<phase>validate</phase>-->
+                            <!--<goals>-->
+                                <!--<goal>create</goal>-->
+                            <!--</goals>-->
+                        <!--</execution>-->
+                    <!--</executions>-->
+                    <!--<configuration>-->
+                        <!--<doCheck>false</doCheck>-->
+                        <!--<doUpdate>false</doUpdate>-->
+                        <!--<revisionOnScmFailure>no.scm.config.in.pom</revisionOnScmFailure>-->
+                    <!--</configuration>-->
+                <!--</plugin>-->
+            </plugins>
+        </pluginManagement>
         <plugins>
             <plugin>
                 <groupId>org.apache.felix</groupId>
@@ -281,6 +335,7 @@
                     </execution>
                 </executions>
             </plugin>
+
             <plugin>
                 <groupId>org.apache.felix</groupId>
                 <artifactId>maven-bundle-plugin</artifactId>
@@ -321,10 +376,11 @@
                             !org.wso2.carbon.identity.application.authenticator.custombasicauth.internal,
                             org.wso2.carbon.identity.application.authenticator.custombasicauth.*;version="${identity.application.auth.basicauth.exp.pkg.version}"
                         </Export-Package>
-                        <SCM-Revision>${buildNumber}</SCM-Revision>
+                        <!--<SCM-Revision>${buildNumber}</SCM-Revision>-->
                     </instructions>
                 </configuration>
             </plugin>
+
             <!--This need to be uncommented once the custom authenticator is working-->
             <!--<plugin>-->
             <!--<groupId>org.apache.maven.plugins</groupId>-->
@@ -336,6 +392,18 @@
             <!--</suiteXmlFiles>-->
             <!--</configuration>-->
             <!--</plugin>-->
+
+            <plugin>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>2.3.1</version>
+                <inherited>true</inherited>
+                <configuration>
+                    <encoding>UTF-8</encoding>
+                    <source>1.7</source>
+                    <target>1.7</target>
+                </configuration>
+            </plugin>
+
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>buildnumber-maven-plugin</artifactId>
@@ -351,17 +419,7 @@
                 <configuration>
                     <doCheck>false</doCheck>
                     <doUpdate>false</doUpdate>
-                </configuration>
-            </plugin>
-
-            <plugin>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <version>2.3.1</version>
-                <inherited>true</inherited>
-                <configuration>
-                    <encoding>UTF-8</encoding>
-                    <source>1.7</source>
-                    <target>1.7</target>
+                    <revisionOnScmFailure>no.scm.config.in.pom</revisionOnScmFailure>
                 </configuration>
             </plugin>
 

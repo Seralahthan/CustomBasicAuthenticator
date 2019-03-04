@@ -21,53 +21,38 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.wso2.carbon.identity.application.authentication.framework.*;
-import org.wso2.carbon.identity.application.authentication.framework.config.ConfigurationFacade;
 import org.wso2.carbon.identity.application.authentication.framework.context.AuthenticationContext;
 import org.wso2.carbon.identity.application.authentication.framework.exception.AuthenticationFailedException;
 import org.wso2.carbon.identity.application.authentication.framework.exception.InvalidCredentialsException;
 import org.wso2.carbon.identity.application.authentication.framework.exception.LogoutFailedException;
-import org.wso2.carbon.identity.application.authentication.framework.internal.FrameworkServiceDataHolder;
 import org.wso2.carbon.identity.application.authentication.framework.model.AuthenticatedUser;
 import org.wso2.carbon.identity.application.authentication.framework.util.FrameworkConstants;
 import org.wso2.carbon.identity.application.authentication.framework.util.FrameworkUtils;
 import org.wso2.carbon.identity.application.authenticator.custombasicauth.internal.CustomBasicAuthenticatorServiceComponent;
 import org.wso2.carbon.identity.application.common.model.User;
 import org.wso2.carbon.identity.base.IdentityRuntimeException;
-import org.wso2.carbon.identity.core.model.IdentityErrorMsgContext;
-import org.wso2.carbon.identity.core.util.IdentityCoreConstants;
 import org.wso2.carbon.identity.core.util.IdentityTenantUtil;
-import org.wso2.carbon.identity.core.util.IdentityUtil;
 import org.wso2.carbon.user.api.UserRealm;
-import org.wso2.carbon.user.core.UserCoreConstants;
-import org.wso2.carbon.user.core.UserStoreException;
 import org.wso2.carbon.user.core.UserStoreManager;
-import org.wso2.carbon.user.core.util.UserCoreUtil;
 import org.wso2.carbon.utils.multitenancy.MultitenantUtils;
 
-import java.io.IOException;
-import java.net.URLEncoder;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 /**
- * Username Only based Authenticator
+ * Username Only based Custom Authenticator
  */
 public class CustomBasicAuthenticator extends AbstractApplicationAuthenticator
         implements LocalApplicationAuthenticator {
 
     private static final long serialVersionUID = 1819664539416029785L;
-    //    private static final String PASSWORD_PROPERTY = "PASSWORD_PROPERTY";
-//    private static final String PASSWORD_RESET_ENDPOINT = "accountrecoveryendpoint/confirmrecovery.do?";
     private static final Log log = LogFactory.getLog(CustomBasicAuthenticator.class);
-//    private static String RE_CAPTCHA_USER_DOMAIN = "user-domain-recaptcha";
 
     @Override
     public boolean canHandle(HttpServletRequest request) {
         String userName = request.getParameter(CustomBasicAuthenticatorConstants.USER_NAME);
-//        String password = request.getParameter(CustomBasicAuthenticatorConstants.PASSWORD);
         return userName != null;
     }
 
@@ -86,10 +71,8 @@ public class CustomBasicAuthenticator extends AbstractApplicationAuthenticator
                     if (getName().equals(context.getProperty(FrameworkConstants.LAST_FAILED_AUTHENTICATOR))) {
                         context.setRetrying(true);
                     }
-//                    initiateAuthenticationRequest(request, response, context);
                     context.setCurrentAuthenticator(getName());
                     context.setRetrying(false);
-//                    return AuthenticatorFlowStatus.INCOMPLETE;
                     try {
                         processAuthenticationResponse(request, response, context);
                         if (this instanceof LocalApplicationAuthenticator) {
@@ -105,26 +88,9 @@ public class CustomBasicAuthenticator extends AbstractApplicationAuthenticator
                         }
                         request.setAttribute(FrameworkConstants.REQ_ATTR_HANDLED, true);
                         context.setProperty(FrameworkConstants.LAST_FAILED_AUTHENTICATOR, null);
-//                        publishAuthenticationStepAttempt(request, context, context.getSubject(), true);
                         return AuthenticatorFlowStatus.SUCCESS_COMPLETED;
                     } catch (AuthenticationFailedException e) {
-//                        publishAuthenticationStepAttempt(request, context, e.getUser(), false);
                         request.setAttribute(FrameworkConstants.REQ_ATTR_HANDLED, true);
-//                        // Decide whether we need to redirect to the login page to retry authentication.
-//                        boolean sendToMultiOptionPage =
-//                                isStepHasMultiOption(context) && isRedirectToMultiOptionPageOnFailure();
-//                        context.setRetrying(retryAuthenticationEnabled());
-//                        if (retryAuthenticationEnabled(context) && !sendToMultiOptionPage) {
-//                            // The Authenticator will re-initiate the authentication and retry.
-//                            context.setCurrentAuthenticator(getName());
-//                            initiateAuthenticationRequest(request, response, context);
-//                            return AuthenticatorFlowStatus.INCOMPLETE;
-//                        } else {
-//                            context.setProperty(FrameworkConstants.LAST_FAILED_AUTHENTICATOR, getName());
-//                            // By throwing this exception step handler will redirect to multi options page if
-//                            // multi-option are available in the step.
-//                            throw e;
-//                        }
                         context.setProperty(FrameworkConstants.LAST_FAILED_AUTHENTICATOR, getName());
                         return AuthenticatorFlowStatus.INCOMPLETE;
 
@@ -179,8 +145,6 @@ public class CustomBasicAuthenticator extends AbstractApplicationAuthenticator
 
         boolean isAuthenticated;
         UserStoreManager userStoreManager;
-        // Reset RE_CAPTCHA_USER_DOMAIN thread local variable before the authentication
-//        IdentityUtil.threadLocalProperties.get().remove(RE_CAPTCHA_USER_DOMAIN);
         // Check the authentication
         try {
             int tenantId = IdentityTenantUtil.getTenantIdOfUser(username);
@@ -204,19 +168,6 @@ public class CustomBasicAuthenticator extends AbstractApplicationAuthenticator
             throw new AuthenticationFailedException(e.getMessage(), User.getUserFromUserName(username), e);
         }
 
-//        if (!isAuthenticated) {
-//            if (log.isDebugEnabled()) {
-//                log.debug("User authentication failed due to invalid credentials");
-//            }
-//            if (IdentityUtil.threadLocalProperties.get().get(RE_CAPTCHA_USER_DOMAIN) != null) {
-//                username = IdentityUtil.addDomainToName(
-//                        username, IdentityUtil.threadLocalProperties.get().get(RE_CAPTCHA_USER_DOMAIN).toString());
-//            }
-//            IdentityUtil.threadLocalProperties.get().remove(RE_CAPTCHA_USER_DOMAIN);
-//            throw new InvalidCredentialsException("User authentication failed due to invalid credentials",
-//                    User.getUserFromUserName(username));
-//        }
-
         String tenantDomain = MultitenantUtils.getTenantDomain(username);
 
         //TODO: user tenant domain has to be an attribute in the AuthenticationContext
@@ -224,55 +175,7 @@ public class CustomBasicAuthenticator extends AbstractApplicationAuthenticator
 
         username = FrameworkUtils.prependUserStoreDomainToName(username);
 
-//        if (getAuthenticatorConfig().getParameterMap() != null) {
-//            String userNameUri = getAuthenticatorConfig().getParameterMap().get("UserNameAttributeClaimUri");
-//            if (StringUtils.isNotBlank(userNameUri)) {
-//                boolean multipleAttributeEnable;
-//                String domain = UserCoreUtil.getDomainFromThreadLocal();
-//                if (StringUtils.isNotBlank(domain)) {
-//                    multipleAttributeEnable = Boolean.parseBoolean(userStoreManager.getSecondaryUserStoreManager(domain)
-//                            .getRealmConfiguration().getUserStoreProperty("MultipleAttributeEnable"));
-//                } else {
-//                    multipleAttributeEnable = Boolean.parseBoolean(userStoreManager.
-//                            getRealmConfiguration().getUserStoreProperty("MultipleAttributeEnable"));
-//                }
-//                if (multipleAttributeEnable) {
-//                    try {
-//                        if (log.isDebugEnabled()) {
-//                            log.debug("Searching for UserNameAttribute value for user " + username +
-//                                    " for claim uri : " + userNameUri);
-//                        }
-//                        String usernameValue = userStoreManager.
-//                                getUserClaimValue(MultitenantUtils.getTenantAwareUsername(username), userNameUri, null);
-//                        if (StringUtils.isNotBlank(usernameValue)) {
-//                            tenantDomain = MultitenantUtils.getTenantDomain(username);
-//                            usernameValue = FrameworkUtils.prependUserStoreDomainToName(usernameValue);
-//                            username = usernameValue + "@" + tenantDomain;
-//                            if (log.isDebugEnabled()) {
-//                                log.debug("UserNameAttribute is found for user. Value is :  " + username);
-//                            }
-//                        }
-//                    } catch (UserStoreException e) {
-//                        //ignore  but log in debug
-//                        if (log.isDebugEnabled()) {
-//                            log.debug("Error while retrieving UserNameAttribute for user : " + username, e);
-//                        }
-//                    }
-//                } else {
-//                    if (log.isDebugEnabled()) {
-//                        log.debug("MultipleAttribute is not enabled for user store domain : " + domain + " " +
-//                                "Therefore UserNameAttribute is not retrieved");
-//                    }
-//                }
-//            }
-//        }
         context.setSubject(AuthenticatedUser.createLocalAuthenticatedUserFromSubjectIdentifier(username));
-//        String rememberMe = request.getParameter("chkRemember");
-//
-//        if ("on".equals(rememberMe)) {
-//            context.setRememberMe(true);
-//        }
-
     }
 
     @Override
